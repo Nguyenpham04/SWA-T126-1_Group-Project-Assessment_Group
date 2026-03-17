@@ -15,7 +15,7 @@ Nguyen Ngoc Nhu Y
 
 Nhat Linh
 
-##Project Files
+## Project Files
 
 COMP3020 Social Web Analytics T1 2026 - Group Project → Official assignment requirements provided by the university
 SWA_Group Project.R -> R script
