@@ -1,8 +1,10 @@
 library(tidyverse) 
 library(RedditExtractoR)
 #https://youtu.be/Snm0Azfi_hc,how to get reddit API 
+#Question 1
+#1A
 urls <- find_thread_urls(
-  subreddit = "climate change",
+  subreddit = "climatechange",
   sort_by = "top",
   period = "year"
 )
@@ -12,10 +14,12 @@ view(comment$comments)
 view(comment$threads)
 
 write.csv(comment$threads,"reddit_threads.csv")
-write.csv(comment$comments, "reddit_comments.csv")
+threads <- read.csv("reddit_threads.csv")
+#1B
 
-top_3_threads <- comment$threads %>%
-  arrange(desc(score)) %>%
+top_3_threads <- threads %>%
+  arrange(desc(upvotes)) %>%
   slice(1:3)
 
 top_3_threads
+top_3_threads[, c("title", "text")]
