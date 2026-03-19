@@ -1,6 +1,7 @@
 library(tidyverse) 
 library(RedditExtractoR)
 library(tidytext)
+library(SnowballC)
 #https://youtu.be/Snm0Azfi_hc,how to get reddit API 
 #Question 1
 #1A
@@ -36,50 +37,35 @@ merged_data <- top_3_threads %>%
 view(merged_data)
 
 #clean data
-merged_data <- merged_data %>%
-  filter(!is.na(comment)) %>%                     # bỏ các dòng NA
-  mutate(comment = tolower(comment)) %>%          # chữ thường
-  mutate(comment = gsub("[[:punct:]]", " ", comment)) # bỏ dấu câu
-
-view(merged_data)
-
-bigrams <-  merged_data %>%
-  unnest_tokens(bigram, comment, token = "ngrams", n = 2)
-
-bigrams <- bigrams %>%
-  separate(bigram, c("word1", "word2"), sep = " ")
 
 data("stop_words")
-bigrams <- bigrams %>%
+custom_stop <- c("im", "dont", "youre", "ive", "amp", "thats", "cant","don t","i m","it s","isn t","i m", "in the","in a")
+
+bigrams <- merged_data %>%
+  unnest_tokens(bigram, comment, token = "ngrams", n = 2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ") %>%
   filter(!is.na(word1), !is.na(word2)) %>%
-  filter(!word1 %in% stop_words$word,
-         !word2 %in% stop_words$word) %>%
+  filter(word1 != "", word2 != "") %>%
+  mutate(word1 = trimws(word1),
+         word2 = trimws(word2)) %>%
+  mutate(word1 = wordStem(word1),
+         word2 = wordStem(word2)) %>%
+  filter(!word1 %in% c(stop_words$word, custom_stop),
+         !word2 %in% c(stop_words$word, custom_stop)) %>%
   filter(!grepl("http|www", word1),
          !grepl("http|www", word2)) %>%
   filter(!grepl("[0-9]", word1),
          !grepl("[0-9]", word2)) %>%
-  filter(word1 != "na", word2 != "na") %>%
-
-bigrams <- bigrams %>%
-  mutate(word1 = wordStem(word1),
-         word2 = wordStem(word2))
-
-bigrams <- bigrams %>%
   unite(bigram, word1, word2, sep = " ")
 
 view(bigrams)
 
 #count top 15 comments each thread
 
-bigram_counts <- bigrams %>%
-  count(url, bigram, sort = TRUE)
-bigram_counts
-
 top_bigrams <- bigram_counts %>%
   group_by(url) %>%
-  slice_max(order_by = n, n = 15) 
-
-top_bigrams <- top_bigrams %>% ungroup()
+  slice_max(order_by = n, n = 15, with_ties = FALSE) %>%
+  ungroup()
 
 view(top_bigrams)
 
