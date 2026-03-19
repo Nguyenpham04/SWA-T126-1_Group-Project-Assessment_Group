@@ -3,7 +3,7 @@ Western Sydney University - Vietnamm campus
 
 Class: SWA-T126-1
 ## Project Overview
-This project explores social web analytics using data collected from Reddit and Mastodon. The main objective is to apply text mining, clustering, regression, and network analysis techniques to extract meaningful insights from online discussions.
+This project explores social web analytics using data collected from Reddit. The main objective is to apply text mining, clustering, regression, and network analysis techniques to extract meaningful insights from online discussions.
 
 Selected Topic: Climate Change
 
