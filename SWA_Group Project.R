@@ -2,6 +2,8 @@ library(tidyverse)
 library(RedditExtractoR)
 library(tidytext)
 library(SnowballC)
+library(tm)
+library(factoextra)
 #https://youtu.be/Snm0Azfi_hc,how to get reddit API 
 #Question 1
 #1A
@@ -61,6 +63,8 @@ bigrams <- merged_data %>%
 view(bigrams)
 
 #count top 15 comments each thread
+bigram_counts <- bigrams %>%
+  count(url, bigram, sort = TRUE)
 
 top_bigrams <- bigram_counts %>%
   group_by(url) %>%
@@ -72,6 +76,7 @@ view(top_bigrams)
 #plot bigram 
 
 threads <- unique(as.character(top_bigrams$url))
+
 
 for (i in seq_along(threads)) {
   t <- threads[i]   # đảm bảo chỉ 1 giá trị
@@ -90,3 +95,21 @@ for (i in seq_along(threads)) {
       theme_minimal()
   )
 }
+
+#Question 2
+#2A
+view(merged_data)
+cleaned_data <- merged_data %>% 
+  filter(!is.na(comment), comment != "") %>%
+  mutate(comment = trimws(comment)) %>%
+  filter(!grepl("http|www", comment)) %>%
+  filter(!grepl("[0-9]", comment)) %>%
+  filter(!comment %in% c(stop_words$word, custom_stop))
+view(cleaned_data)
+
+dtm <- DocumentTermMatrix(cleaned_data)
+tf_idf <- weightTfIdf(dtm)
+tf_idf
+dtm_matrix <- as.matrix(tf_idf)
+#2B
+fviz_nbclust(dtm_matrix, kmeans, method = "wss")
