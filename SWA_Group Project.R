@@ -3,7 +3,6 @@ library(RedditExtractoR)
 library(tidytext)
 library(SnowballC)
 library(tm)
-library(factoextra)
 #https://youtu.be/Snm0Azfi_hc,how to get reddit API 
 #Question 1
 #1A
@@ -23,7 +22,6 @@ write.csv(comment$comments,"reddit_comments.csv")
 threads <- read.csv("reddit_threads.csv",stringsAsFactors = FALSE)
 comments <-read.csv("reddit_comments.csv",stringsAsFactors = FALSE)
 #1B
-
 top_3_threads <- threads %>%
   arrange(desc(upvotes)) %>%
   slice(1:3)
@@ -109,7 +107,49 @@ view(cleaned_data)
 
 dtm <- DocumentTermMatrix(cleaned_data)
 tf_idf <- weightTfIdf(dtm)
-tf_idf
-dtm_matrix <- as.matrix(tf_idf)
+mat <- as.matrix(tf_idf)
+str(mat)
 #2B
-fviz_nbclust(dtm_matrix, kmeans, method = "wss")
+wcss <- vector()
+for (k in 1:10) {
+  km <- kmeans(mat, centers = k, nstart = 25)
+  wcss[k] <- km$tot.withinss
+}
+
+plot(1:10, wcss, type = "b",
+     main = "Elbow Method",
+     xlab = "Number of clusters (k)",
+     ylab = "WCSS")
+#2C
+all_comments <- cleaned_data %>%
+  mutate(label = case_when(
+    url == top_3_threads$url[1] ~ "A",
+    url == top_3_threads$url[2] ~ "B",
+    url == top_3_threads$url[3] ~ "C"
+  ))
+view(all_comments)
+
+#2D
+# PCA for dimension reduction
+pca <- prcomp(mat, scale. = TRUE)
+# Choose number of principal components (e.g., first 50)
+ncomp <- min(ncol(pca$x), 50)
+mat_pca <- pca$x[, 1:ncomp]
+
+# Run kmeans with chosen k (say k=3 from elbow)
+set.seed(123)
+km <- kmeans(mat_pca, centers = 3, nstart = 25)
+
+#2E
+plot_data <- data.frame(
+  PC1 = mat_pca[,1],
+  PC2 = mat_pca[,2],
+  cluster = factor(km$cluster),
+  label = all_comments$label[1:nrow(mat_pca)]  # match row count
+)
+
+ggplot(plot_data, aes(x = PC1, y = PC2,
+                      color = cluster, shape = label)) +
+  geom_point(size = 3) +
+  labs(title = "K-means Clustering vs Ground Truth",
+       x = "PC1", y = "PC2")
