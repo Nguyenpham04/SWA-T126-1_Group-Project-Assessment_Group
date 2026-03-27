@@ -153,3 +153,8 @@ ggplot(plot_data, aes(x = PC1, y = PC2,
   geom_point(size = 3) +
   labs(title = "K-means Clustering vs Ground Truth",
        x = "PC1", y = "PC2")
+
+# Question 3 Regression Analysis
+## 3A
+threads <- read.csv("reddit_threads.csv")
+head(threads)
