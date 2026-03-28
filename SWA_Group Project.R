@@ -151,3 +151,18 @@ ggplot(plot_data, aes(x = PC1, y = PC2,
 #3A
 threads <- read.csv("reddit_threads.csv")
 head(threads)
+
+#3B
+plot(threads$score, threads$comments,
+     main = "Relationship Between Upvotes and Comments",
+     xlab = "Score (Upvotes)",
+     ylab = "Number of Comments",
+     col = "lightblue",
+     pch = 16)
+
+plot(log(threads$score + 1), log(threads$comments + 1),
+     main = "Relationship Between Upvotes and Comments (Log Scale)",
+     xlab = "Score (Upvotes)",
+     ylab = "Number of Comments",
+     col = "lightpink", 
+     pch = 16)
