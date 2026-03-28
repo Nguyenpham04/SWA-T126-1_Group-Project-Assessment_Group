@@ -166,3 +166,7 @@ plot(log(threads$score + 1), log(threads$comments + 1),
      ylab = "Number of Comments",
      col = "lightpink", 
      pch = 16)
+
+#3C
+model <- lm(comments ~ score, data = threads)
+summary(model)
