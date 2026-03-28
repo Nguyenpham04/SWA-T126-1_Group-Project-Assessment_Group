@@ -148,4 +148,6 @@ ggplot(plot_data, aes(x = PC1, y = PC2,
        x = "PC1", y = "PC2")
 
 # Question 3 Regression Analysis
-
+#3A
+threads <- read.csv("reddit_threads.csv")
+head(threads)
