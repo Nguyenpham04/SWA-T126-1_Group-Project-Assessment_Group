@@ -13,7 +13,7 @@ Pham Hong Thao Nguyen
 
 Nguyen Ngoc Nhu Y
 
-Nhat Linh
+Nguyen Hoang Nhat Linh
 
 ## Project Files
 
