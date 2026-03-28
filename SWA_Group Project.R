@@ -3,6 +3,11 @@ library(RedditExtractoR)
 library(tidytext)
 library(SnowballC)
 library(tm)
+library(httr)
+library(dplyr)
+library(igraph)
+library(jsonlite)
+library(rtoot)
 #https://youtu.be/Snm0Azfi_hc,how to get reddit API 
 #Question 1
 #1A
@@ -170,3 +175,143 @@ plot(log(threads$score + 1), log(threads$comments + 1),
 #3C
 model <- lm(comments ~ score, data = threads)
 summary(model)
+
+
+# Question 4 Mastodon API
+
+# 4A: Top 3 users related to #climatechange
+# Get posts related to climate change
+posts <- get_timeline_hashtag(
+  hashtag = "climatechange",
+  instance = "mastodon.social",
+  limit = 1000)
+
+colnames(posts
+
+# Extract user information and count frequency
+usernames <- sapply(posts$account, function(x) x$username)
+user_freq <- as.data.frame(table(usernames))
+
+# Sort
+user_freq <- user_freq %>%
+  arrange(desc(Freq))
+top_3_users <- head(user_freq, 3)
+top_3_users
+
+# Lock users
+top_users <- c("Snoro","cobrate","injar.bsky.social")
+
+# 4B: Network structure
+# Function to get user ID
+get_user_id <- function(username) {
+  acc <- search_accounts(username)
+  
+  if (nrow(acc) > 0) {
+    return(acc$id[1])
+  } else {
+    return(NA)
+  }
+}
+
+# Initialize edge list
+edges <- data.frame()
+
+for (user in top_users) {
+  
+  cat("\nProcessing user:", user, "\n")
+  
+  user_id <- get_user_id(user)
+  
+  if (is.na(user_id)) {
+    cat("User not found\n")
+    next
+  }
+  
+  # Get followers
+  followers <- tryCatch({
+    get_account_followers(user_id, limit = 50)
+  }, error = function(e) NULL)
+  
+  if (!is.null(followers) && nrow(followers) > 0) {
+    df_f <- data.frame(
+      from = followers$username,
+      to = user
+    )
+    edges <- rbind(edges, df_f)
+  } else {
+    cat("No followers retrieved (private or limited)\n")
+  }
+  
+  Sys.sleep(1)  # prevent rate limiting
+  
+
+  # Get following (friends)
+ following <- tryCatch({
+    get_account_following(user_id, limit = 50)
+  }, error = function(e) NULL)
+  
+  if (!is.null(following) && nrow(following) > 0) {
+    df_fr <- data.frame(
+      from = user,
+      to = following$username
+    )
+    edges <- rbind(edges, df_fr)
+  } else {
+    cat("No following retrieved (private or limited)\n")
+  }
+}
+                    
+# Remove duplicates
+edges <- unique(edges)
+
+# Create graph
+g <- graph_from_edgelist(as.matrix(edges), directed = TRUE)
+
+# Ensure all top users exist in graph
+missing_users <- setdiff(top_users, V(g)$name)
+g2 <- add_vertices(g, nv = length(missing_users), name = missing_users)
+
+# Plot network
+plot(g2,
+     vertex.size = 5,
+     vertex.label.cex = 0.75,
+     edge.arrow.size = 0.3,
+     main = "Mastodon Network (Climate Change)")
+  
+
+# 4C Degree centrality and PageRank
+# Degree centrality
+deg <- degree(g2, mode = "all")
+degree_df <- data.frame(
+  user = names(deg),
+  degree = deg) %>%
+  arrange(desc(degree))
+head(degree_df)
+
+#Initial graph
+plot(g2,
+     vertex.size = deg * 2 + 5,
+     vertex.label.cex = 0.7,
+     edge.arrow.size = 0.3,
+     main = "Network Graph (Degree Centrality)")
+
+# Log and lay out
+plot(g2,
+     layout = layout.fruchterman.reingold,
+     vertex.size = log(deg + 1) * 5,
+     vertex.label.cex = 0.6,
+     main = "Network Graph (Degree Centrality) - Log")
+
+
+# PageRank
+pr <- page_rank(g2)$vector
+pagerank_df <- data.frame(
+  user = names(pr),
+  pagerank = pr) %>%
+  arrange(desc(pagerank))
+
+head(pagerank_df)
+
+# Top users for each metric - table
+top_degree_user <- degree_df$user[1]
+top_pagerank_user <- pagerank_df$user[1]
